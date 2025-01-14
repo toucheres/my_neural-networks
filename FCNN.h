@@ -5,18 +5,19 @@
 #include <iostream>
 #include <ctime>
 #include <random>
+
 #if !defined(max)
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif // max
 
 using data = double;
 
+inline data ReLU_plus(data in) { return max(in, in * 0.05); }
+inline data dReLU_plusdx(data in) { return in > 0 ? 1 : 0.05; }
+
 class InputLay;
 class HiddenLay;
 class OutputLay;
-
-inline data ReLU_plus(data in) { return max(in, in * 0.05); }
-inline data dReLU_plusdx(data in) { return in > 0 ? 1 : 0.05; }
 
 struct argFCNN
 {

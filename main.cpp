@@ -1,6 +1,7 @@
 #include <iostream>
-#include"FCNN.h"
-int main(int, char**){
+#include "FCNN.h"
+int main(int, char **)
+{
     argFCNN a;
     a.numOfLay = 3;
     a.arg[0] = 10;
@@ -19,10 +20,15 @@ int main(int, char**){
     }
 
     b.changeSoure(in);
-    b.forward();
-    for (size_t i = 0; i < 5; i++)
+
+    for (size_t i = 0; i < 10; i++)
     {
-        std::cout << b.result[i] << " ";
+        b.forward();
+        for (size_t i = 0; i < 5; i++)
+        {
+            std::cout << b.result[i] << " ";
+        }
+        std::cout << std::endl;
     }
 
     int c = 0;

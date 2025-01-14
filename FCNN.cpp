@@ -256,6 +256,7 @@ void OutputLay::forward()
     for (size_t i = 0; i < this->thisNodeNum; i++)
     {
         // 对上一层的第j的感知机求和
+        this->sum[i] = 0;
         for (size_t j = 0; j < this->lastNodeNum; j++)
         {
             this->sum[i] += this->weights[(i * this->thisNodeNum) + j] * this->input[j];
