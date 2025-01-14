@@ -12,7 +12,7 @@ int main(int, char**){
 
     std::default_random_engine engine;
     std::uniform_real_distribution<data> getnum(0.001, 0.999); // 左闭右闭区间
-    engine.seed(time(0));
+    engine.seed((unsigned int)time(0));
     for (size_t i = 0; i < 10; i++)
     {
         in[i] = getnum(engine);

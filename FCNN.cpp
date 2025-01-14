@@ -4,7 +4,7 @@ void FCNN::initRandom()
 {
     std::default_random_engine engine;
     std::uniform_real_distribution<data> getnum(0.1, 0.9); // 左闭右闭区间
-    engine.seed(time(0));
+    engine.seed((unsigned int)time(0));
     for (size_t i = 0; i < this->size_arg; i++)
     {
          this->res_arg[i] = getnum(engine);
@@ -29,20 +29,20 @@ void FCNN::forward()
 
 FCNN::FCNN(const argFCNN &initarg)
 {
-    int sum_bias = 0;
+    size_t sum_bias = 0;
     for (int i = 1; i < initarg.numOfLay; i++)
         sum_bias += initarg.arg[i];
 
-    int sum_weights = 0;
+    size_t sum_weights = 0;
     for (int i = 1; i < initarg.numOfLay; i++)
         sum_weights += initarg.arg[i - 1] * initarg.arg[i];
 
-    int sum_loss = sum_bias;
-    int sum_delweight = sum_weights;
-    int sum_delbias = sum_bias;
+    size_t sum_loss = sum_bias;
+    size_t sum_delweight = sum_weights;
+    size_t sum_delbias = sum_bias;
 
-    int sum_sum = sum_bias;
-    int sum_actived = sum_bias;
+    size_t sum_sum = sum_bias;
+    size_t sum_actived = sum_bias;
 
     this->size_arg = sum_bias + sum_weights;
     this->size_forward = sum_sum + sum_actived;
