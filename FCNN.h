@@ -43,14 +43,18 @@ private:
     data *res_forward;
     data *res_backword;
 
+    
+
     size_t size_arg;
     size_t size_forward;
     size_t size_backward;    
 
     argFCNN setting;
-
+    void initRandom();
 public:
+    data *result;
     void changeSoure(data* in);
+    void forward();
     FCNN(const argFCNN& initarg);
     ~FCNN();
 };
@@ -84,7 +88,7 @@ class HiddenLay
     friend FCNN;
 
 private:
-    data *input;
+    data *&input;
 
     data *res_arg;
     data *res_forward;
@@ -111,6 +115,9 @@ private:
 
     HiddenLay *lastHidden=nullptr;
     InputLay *lastInput=nullptr;
+
+    data (*activefun)(data)=ReLU_plus;
+    data (*dactivefun)(data)=dReLU_plusdx;
 
 public:
     HiddenLay(HiddenLay *last, size_t size);
