@@ -1,4 +1,5 @@
 #include <iostream>
+#define private public
 #include "FCNN.h"
 int main(int, char **)
 {
@@ -7,6 +8,7 @@ int main(int, char **)
     a.arg[0] = 10;
     a.arg[1] = 11;
     a.arg[2] = 5;
+    a.learningRateType = defult_learningtype;
     FCNN b(a);
 
     data *in = (data *)malloc(sizeof(data) * 10);
@@ -24,10 +26,13 @@ int main(int, char **)
     for (size_t i = 0; i < 10; i++)
     {
         b.forward();
-        for (size_t i = 0; i < 5; i++)
-        {
-            std::cout << b.result[i] << " ";
-        }
+        // for (size_t i = 0; i < 5; i++)
+        // {
+        //     std::cout << b.result[i] << " ";
+        // }
+        b.backward(0);
+        std::cout << std::endl;
+        printf("%lf",b.loss);
         std::cout << std::endl;
     }
 

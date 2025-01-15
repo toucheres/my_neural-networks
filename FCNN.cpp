@@ -27,6 +27,64 @@ void FCNN::forward()
     this->outputlay->forward();
 }
 
+void FCNN::backward(int lable)
+{
+    double tp_loss = 0;
+    tp_loss = (-1) * log10(this->result[lable]);
+
+    this->loss = tp_loss;
+
+    if (this->setting.learningRateType == defult_learningtype)
+    {
+        this->learningRate = pow((this->loss / 10), 1.7);
+        if (this->learningRate>0.001)
+        {
+            this->learningRate = 0.001;
+        }    
+    }
+    else if (this->setting.learningRateType == static_learningtype)
+        this->learningRate = setting.learningRate;
+
+    this->outputlay->backward(lable);
+
+    for (size_t i = 0; i < this->setting.numOfLay - 2; i++)
+    {
+        this->hiddenlay[i]->backward();
+    }
+
+    for (size_t i = 0; i < this->size_arg; i++)
+    {
+        this->res_arg[i] -= this->res_backword[i];
+    }
+}
+
+void FCNN::backward(data* lable)
+{
+    double tp_loss = 0;
+    for (size_t i = 0; i < this->setting.arg[this->setting.numOfLay-1]; i++)
+        tp_loss += lable[i] * log(this->result[i]);
+
+    this->loss = tp_loss;
+
+    if(this->setting.learningRateType==defult_learningtype)
+        this->learningRate = pow((this->loss / 10), 1.7);
+    else if (this->setting.learningRateType==static_learningtype)
+        this->learningRate = setting.learningRate;
+
+    this->outputlay->backward(lable);
+
+    for (size_t i = 0; i < this->setting.arg[this->setting.numOfLay-2]; i++)
+    {
+        this->hiddenlay[i]->backward();
+    }
+
+    for (size_t i = 0; i < this->size_arg; i++)
+    {
+        this->res_arg[i] -= this->res_backword[i];
+    }
+    
+}
+
 FCNN::FCNN(const argFCNN &initarg)
 {
     size_t sum_bias = 0;
@@ -100,7 +158,7 @@ HiddenLay::HiddenLay(HiddenLay *last, size_t size):input(last->actived)
 {
     // weight bias
     // sum actived
-    // loss delweight delbias
+    // delweight delbias loss 
     lastInput = nullptr;
     lastHidden = last;
     //input = lastHidden->actived;
@@ -118,16 +176,20 @@ HiddenLay::HiddenLay(HiddenLay *last, size_t size):input(last->actived)
     weights = this->res_arg;
     bias = this->weights + this->num_weights;
 
-    loss = this->res_backward;
-    del_weights = this->loss + this->num_bias;
-    del_bias = this->weights + this->num_weights;
+    // loss = this->res_backward;
+    // del_weights = this->loss + this->num_bias;
+    // del_bias = this->weights + this->num_weights;
+
+    del_weights = this->res_backward;
+    del_bias = del_weights + this->num_weights;
+    loss = del_bias + this->num_bias;
 
     sum = this->res_forward;
     actived = this->sum + this->num_bias;
 
     end_arg = this->bias + this->num_bias;
     end_forward = this->actived + this->num_bias;
-    end_backward = this->del_bias + this->num_bias;
+    end_backward = this->loss + this->num_bias;
 }
 
 HiddenLay::HiddenLay(InputLay *last, size_t size):input(last->output)
@@ -153,16 +215,20 @@ HiddenLay::HiddenLay(InputLay *last, size_t size):input(last->output)
     weights = this->res_arg;
     bias = this->weights + this->num_weights;
 
-    loss = this->res_backward;
-    del_weights = this->loss + this->num_bias;
-    del_bias = this->weights + this->num_weights;
+    // loss = this->res_backward;
+    // del_weights = this->loss + this->num_bias;
+    // del_bias = this->weights + this->num_weights;
+
+    del_weights = this->res_backward;
+    del_bias = del_weights + this->num_weights;
+    loss = del_bias + this->num_bias;
 
     sum = this->res_forward;
     actived = this->sum + this->num_bias;
 
     end_arg = this->bias + this->num_bias;
     end_forward = this->actived + this->num_bias;
-    end_backward = this->del_bias + this->num_bias;
+    end_backward = this->loss + this->num_bias;
 }
 
 void HiddenLay::forward()
@@ -178,6 +244,45 @@ void HiddenLay::forward()
         }
         // 激活
         this->actived[i] = this->activefun(this->sum[i]);
+    }
+}
+
+void HiddenLay::backward()
+{
+    // 处理本层hiddenlay的loss
+    for (size_t i = 0; i < this->thisNodeNum; i++)
+    {
+        this->loss[i] *= this->dactivefun(this->sum[i]);
+    }
+    // 输出层权重梯度
+    for (size_t i = 0; i < this->thisNodeNum; i++)
+    {
+        for (size_t j = 0; j < this->lastNodeNum; j++)
+        {
+            this->del_weights[i * this->thisNodeNum + j] = this->loss[i] * this->input[j];
+        }
+    }
+    // 输出层偏置梯度
+    for (size_t i = 0; i < this->num_bias; i++)
+    {
+        this->del_bias[i] = this->loss[i];
+    }
+    // 上一层loss预处理
+    if (this->lastHidden != nullptr)
+    {
+        // inputlay的loss按权反分配
+        for (size_t i = 0; i < this->lastNodeNum; i++)
+        {
+            lastHidden->loss[i] = 0;
+            for (size_t j = 0; j < this->thisNodeNum; j++)
+            {
+                lastHidden->loss[i] += this->loss[j] * this->weights[j * this->thisNodeNum + i];
+            }
+        }
+    }
+    else if (this->lastInput != nullptr)
+    {
+        // 不处理inputlay
     }
 }
 
@@ -203,16 +308,20 @@ OutputLay::OutputLay(HiddenLay *last, size_t size)
     weights = this->res_arg;
     bias = this->weights + this->num_weights;
 
-    loss = this->res_backward;
-    del_weights = this->loss + this->num_bias;
-    del_bias = this->weights + this->num_weights;
+    // loss = this->res_backward;
+    // del_weights = this->loss + this->num_bias;
+    // del_bias = this->weights + this->num_weights;
+
+    del_weights = this->res_backward;
+    del_bias = del_weights + this->num_weights;
+    loss = del_bias + this->num_bias;
 
     sum = this->res_forward;
     actived = this->sum + this->num_bias;
 
     end_arg = this->bias + this->num_bias;
     end_forward = this->actived + this->num_bias;
-    end_backward = this->del_bias + this->num_bias;
+    end_backward = this->loss + this->num_bias;
 }
 
 OutputLay::OutputLay(InputLay *last, size_t size)
@@ -238,16 +347,20 @@ OutputLay::OutputLay(InputLay *last, size_t size)
     weights = this->res_arg;
     bias = this->weights + this->num_weights;
 
-    loss = this->res_backward;
-    del_weights = this->loss + this->num_bias;
-    del_bias = this->weights + this->num_weights;
+    // loss = this->res_backward;
+    // del_weights = this->loss + this->num_bias;
+    // del_bias = this->weights + this->num_weights;
+
+    del_weights = this->res_backward;
+    del_bias = del_weights + this->num_weights;
+    loss = del_bias + this->num_bias;
 
     sum = this->res_forward;
     actived = this->sum + this->num_bias;
 
     end_arg = this->bias + this->num_bias;
     end_forward = this->actived + this->num_bias;
-    end_backward = this->del_bias + this->num_bias;
+    end_backward = this->loss + this->num_bias;
 }
 
 void OutputLay::forward()
@@ -285,6 +398,55 @@ void OutputLay::forward()
     for (int i = 0; i < this->thisNodeNum; ++i)
     {
         this->actived[i] /= sumExp;
+    }
+}
+
+void OutputLay::backward(int lable)
+{
+    data *tpin = (data *)malloc(sizeof(data)*10);
+    memset(tpin,0,sizeof(data)*10);
+    tpin[lable] = 1.0;
+    this->backward(tpin);
+    free(tpin);
+}
+
+void OutputLay::backward(data *lable)
+{
+    // 输出层误差
+    for (size_t i = 0; i < this->num_bias; i++)
+    {
+        this->loss[i] = this->actived[i] - lable[i];
+    }
+    // 输出层权重梯度
+    for (size_t i = 0; i < this->thisNodeNum; i++)
+    {
+        for (size_t j = 0; j < this->lastNodeNum; j++)
+        {
+            this->del_weights[i * this->thisNodeNum + j] = this->loss[i] * this->input[j];
+        }
+    }
+    // 输出层偏置梯度
+    for (size_t i = 0; i < this->num_bias; i++)
+    {
+        this->del_bias[i] = this->loss[i];
+    }
+    // 上一层loss预处理
+    if(this->lastHidden!=nullptr)
+    {
+        //inputlay的loss按权反分配
+        for (size_t i = 0; i < this->lastNodeNum; i++)
+        {
+            lastHidden->loss[i] = 0;
+            for (size_t j = 0; j < this->thisNodeNum; j++)
+            {
+                lastHidden->loss[i] += this->loss[j] * this->weights[j * this->thisNodeNum + i];
+            }
+        }
+        
+    }
+    else if (this->lastInput!=nullptr)
+    {
+        // 不处理inputlay
     }
 }
 

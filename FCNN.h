@@ -19,11 +19,18 @@ class InputLay;
 class HiddenLay;
 class OutputLay;
 
+enum 
+{
+    defult_learningtype,
+    static_learningtype,
+};
 struct argFCNN
 {
     argFCNN();
     size_t *arg;
     size_t numOfLay;
+    double learningRate;
+    int learningRateType;
 };
 
 class FCNN
@@ -33,7 +40,7 @@ class FCNN
     friend OutputLay;
     // weight bias
     // sum actived
-    // loss delweight delbias
+    // delweight delbias loss 
 private:
     size_t numOfLays;
     InputLay *inputlay;
@@ -44,18 +51,20 @@ private:
     data *res_forward;
     data *res_backword;
 
-    
-
     size_t size_arg;
     size_t size_forward;
     size_t size_backward;    
 
     argFCNN setting;
+    double learningRate;
+    double loss;
     void initRandom();
 public:
     data *result;
     void changeSoure(data* in);
     void forward();
+    void backward(int lable);
+    void backward(data* lable);
     FCNN(const argFCNN& initarg);
     ~FCNN();
 };
@@ -81,7 +90,7 @@ private:
 };
 // weight bias
 // sum actived
-// loss delweight delbias
+// delweight delbias loss
 class HiddenLay
 {
     friend HiddenLay;
