@@ -36,11 +36,12 @@ void FCNN::backward(int lable)
 
     if (this->setting.learningRateType == defult_learningtype)
     {
-        this->learningRate = pow((this->loss / 10), 1.7);
-        if (this->learningRate>0.001)
+        this->learningRate = pow((this->loss / 10), 0.3);
+        if (this->learningRate>0.1)
         {
-            this->learningRate = 0.001;
-        }    
+            this->learningRate = 0.1;
+            printf("too high\n");
+        }
     }
     else if (this->setting.learningRateType == static_learningtype)
         this->learningRate = setting.learningRate;
@@ -54,7 +55,7 @@ void FCNN::backward(int lable)
 
     for (size_t i = 0; i < this->size_arg; i++)
     {
-        this->res_arg[i] -= this->res_backword[i];
+        this->res_arg[i] -= this->res_backword[i]*this->learningRate;
     }
 }
 
@@ -80,7 +81,7 @@ void FCNN::backward(data* lable)
 
     for (size_t i = 0; i < this->size_arg; i++)
     {
-        this->res_arg[i] -= this->res_backword[i];
+        this->res_arg[i] -= this->res_backword[i]*this->learningRate;
     }
     
 }

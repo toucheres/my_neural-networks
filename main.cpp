@@ -23,7 +23,7 @@ int main(int, char **)
 
     b.changeSoure(in);
 
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < 100000; i++)
     {
         b.forward();
         // for (size_t i = 0; i < 5; i++)
