@@ -1,13 +1,14 @@
 #include "FCNN.h"
+#include <sstream>
 
 void FCNN::initRandom()
 {
     std::default_random_engine engine;
-    std::uniform_real_distribution<data> getnum(0.1, 0.9); // 左闭右闭区间
+    std::uniform_real_distribution<data> getnum(0.1,0.2); // 左闭右闭区间
     engine.seed((unsigned int)time(0));
     for (size_t i = 0; i < this->size_arg; i++)
     {
-         this->res_arg[i] = getnum(engine);
+        this->res_arg[i] = getnum(engine);
     }
     memset(this->res_forward, 0, sizeof(data) * this->size_forward);
     memset(this->res_backword, 0, sizeof(data) * this->size_backward);
@@ -20,7 +21,7 @@ void FCNN::changeSoure(data *in)
 
 void FCNN::forward()
 {
-    for (size_t i = 0; i < this->numOfLays-2; i++)
+    for (size_t i = 0; i < this->numOfLays - 2; i++)
     {
         hiddenlay[i]->forward();
     }
@@ -31,16 +32,29 @@ void FCNN::backward(int lable)
 {
     double tp_loss = 0;
     tp_loss = (-1) * log10(this->result[lable]);
+    // for (size_t i = 0; i < 10; i++)
+    // {
+    //     if(lable==i)
+    //     {
+    //         tp_loss += (this->result[i] - 0) * (this->result[i] - 0);
+    //     }
+    //     else
+    //     {
+    //         tp_loss += (this->result[i] - 1) * (this->result[i] - 1);
+    //     }
+        
+    // }
+    
 
     this->loss = tp_loss;
 
     if (this->setting.learningRateType == defult_learningtype)
     {
-        this->learningRate = pow((this->loss / 10), 0.3);
-        if (this->learningRate>0.1)
+        this->learningRate = pow((this->loss / this->setting.numofarg()), 0.8);
+        if (this->learningRate > 0.01)
         {
-            this->learningRate = 0.1;
-            printf("too high\n");
+            this->learningRate = 0.01;
+            //printf("too high\n");
         }
     }
     else if (this->setting.learningRateType == static_learningtype)
@@ -55,35 +69,34 @@ void FCNN::backward(int lable)
 
     for (size_t i = 0; i < this->size_arg; i++)
     {
-        this->res_arg[i] -= this->res_backword[i]*this->learningRate;
+        this->res_arg[i] -= this->res_backword[i] * this->learningRate;
     }
 }
 
-void FCNN::backward(data* lable)
+void FCNN::backward(data *lable)
 {
     double tp_loss = 0;
-    for (size_t i = 0; i < this->setting.arg[this->setting.numOfLay-1]; i++)
+    for (size_t i = 0; i < this->setting.arg[this->setting.numOfLay - 1]; i++)
         tp_loss += lable[i] * log(this->result[i]);
 
     this->loss = tp_loss;
 
-    if(this->setting.learningRateType==defult_learningtype)
+    if (this->setting.learningRateType == defult_learningtype)
         this->learningRate = pow((this->loss / 10), 1.7);
-    else if (this->setting.learningRateType==static_learningtype)
+    else if (this->setting.learningRateType == static_learningtype)
         this->learningRate = setting.learningRate;
 
     this->outputlay->backward(lable);
 
-    for (size_t i = 0; i < this->setting.arg[this->setting.numOfLay-2]; i++)
+    for (size_t i = 0; i < this->setting.arg[this->setting.numOfLay - 2]; i++)
     {
         this->hiddenlay[i]->backward();
     }
 
     for (size_t i = 0; i < this->size_arg; i++)
     {
-        this->res_arg[i] -= this->res_backword[i]*this->learningRate;
+        this->res_arg[i] -= this->res_backword[i] * this->learningRate;
     }
-    
 }
 
 FCNN::FCNN(const argFCNN &initarg)
@@ -155,14 +168,14 @@ InputLay::InputLay(data *__res_in, data *__res_arg, data *__res_forward, data *_
     this->thisNodeNum = __size;
 }
 
-HiddenLay::HiddenLay(HiddenLay *last, size_t size):input(last->actived)
+HiddenLay::HiddenLay(HiddenLay *last, size_t size) : input(last->actived)
 {
     // weight bias
     // sum actived
-    // delweight delbias loss 
+    // delweight delbias loss
     lastInput = nullptr;
     lastHidden = last;
-    //input = lastHidden->actived;
+    // input = lastHidden->actived;
 
     res_arg = lastHidden->end_arg;
     res_forward = lastHidden->end_forward;
@@ -193,7 +206,7 @@ HiddenLay::HiddenLay(HiddenLay *last, size_t size):input(last->actived)
     end_backward = this->loss + this->num_bias;
 }
 
-HiddenLay::HiddenLay(InputLay *last, size_t size):input(last->output)
+HiddenLay::HiddenLay(InputLay *last, size_t size) : input(last->output)
 {
     // weight bias
     // sum actived
@@ -201,7 +214,7 @@ HiddenLay::HiddenLay(InputLay *last, size_t size):input(last->output)
 
     lastHidden = nullptr;
     lastInput = last;
-    //input = lastInput->output;
+    // input = lastInput->output;
 
     res_arg = lastInput->res_arg;
     res_forward = lastInput->res_forward;
@@ -366,7 +379,7 @@ OutputLay::OutputLay(InputLay *last, size_t size)
 
 void OutputLay::forward()
 {
-    //求和
+    // 求和
     for (size_t i = 0; i < this->thisNodeNum; i++)
     {
         // 对上一层的第j的感知机求和
@@ -404,8 +417,8 @@ void OutputLay::forward()
 
 void OutputLay::backward(int lable)
 {
-    data *tpin = (data *)malloc(sizeof(data)*10);
-    memset(tpin,0,sizeof(data)*10);
+    data *tpin = (data *)malloc(sizeof(data) * 10);
+    memset(tpin, 0, sizeof(data) * 10);
     tpin[lable] = 1.0;
     this->backward(tpin);
     free(tpin);
@@ -432,9 +445,9 @@ void OutputLay::backward(data *lable)
         this->del_bias[i] = this->loss[i];
     }
     // 上一层loss预处理
-    if(this->lastHidden!=nullptr)
+    if (this->lastHidden != nullptr)
     {
-        //inputlay的loss按权反分配
+        // inputlay的loss按权反分配
         for (size_t i = 0; i < this->lastNodeNum; i++)
         {
             lastHidden->loss[i] = 0;
@@ -443,9 +456,8 @@ void OutputLay::backward(data *lable)
                 lastHidden->loss[i] += this->loss[j] * this->weights[j * this->thisNodeNum + i];
             }
         }
-        
     }
-    else if (this->lastInput!=nullptr)
+    else if (this->lastInput != nullptr)
     {
         // 不处理inputlay
     }
@@ -454,4 +466,88 @@ void OutputLay::backward(data *lable)
 argFCNN::argFCNN()
 {
     this->arg = (size_t *)malloc(sizeof(size_t) * 16);
+}
+
+size_t argFCNN::numofarg()
+{
+    size_t num = 0;
+    for (size_t i = 0; i < this->numOfLay; i++)
+    {
+        num += this->arg[i];
+    }
+    for (size_t i = 1; i < this->numOfLay; i++)
+    {
+        num += this->arg[i] * this->arg[i - 1];
+    }
+    return num;
+}
+
+bool fileIn::isFileExists_ifstream(std::string &name)
+{
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+
+size_t fileIn::getFileSize1(const char *fileName)
+{
+
+    if (fileName == NULL)
+    {
+        return 0;
+    }
+
+    // 这是一个存储文件(夹)信息的结构体，其中有文件大小和创建时间、访问时间、修改时间等
+    struct stat statbuf;
+
+    // 提供文件名字符串，获得文件属性结构体
+    stat(fileName, &statbuf);
+
+    // 获取文件大小
+    size_t filesize = statbuf.st_size;
+
+    return filesize;
+}
+
+fileIn::fileIn(char *source_path)
+{
+    std::string path = source_path;
+    // train
+    std::string train_path = path;
+    train_path += "/Test_set/";
+    for (size_t i = 0; i < 10; i++)
+    {
+        this->res_train.emplace_back(i);
+        for (size_t j = 1; 1 ; j++)
+        {
+            std::vector<data>& pixmapdata = this->res_train.back().nums_informathion_pixmap_bit[j];
+            std::stringstream ss;
+            ss << train_path << "\\" << i << "\\" << j;
+            std::fstream file;
+            file.open(ss.str(), std::ios::in); // 以只读方式打开文件
+
+            if (!file.is_open())
+            {
+                std::cerr << "无法打开文件: " << ss.str() << std::endl;
+                break;//该num文件夹读取完毕
+            }
+            size_t fileSize = this->getFileSize1(ss.str().c_str());
+            std::vector<char> tp;
+            tp.resize(fileSize);                       // 使用 resize 分配实际大小
+                                                       // 读取文件内容
+            file.read(tp.data(), fileSize);            // 使用 data() 获取 char* 指针
+            std::streamsize bytesRead = file.gcount(); // 实际读取的字节数
+
+            if (bytesRead < static_cast<std::streamsize>(fileSize))
+            {
+                // 处理读取不足的情况（例如文件较小或读取错误）
+                tp.resize(bytesRead); // 调整大小以匹配实际读取的字节数
+            }
+
+            file.close(); // 关闭文件
+        }
+    }
+}
+
+fold_num::fold_num(int arg_lable):lable(arg_lable)
+{
 }

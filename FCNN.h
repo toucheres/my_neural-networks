@@ -1,15 +1,16 @@
 #include <iostream>
 #include <vector>
-#include <vector>
 #include <math.h>
 #include <iostream>
 #include <ctime>
 #include <random>
+#include <fstream>
+#include <cassert>
 
 #if !defined(max)
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #endif // max
-
+#define private public
 using data = double;
 
 inline data ReLU_plus(data in) { return max(in, in * 0.05); }
@@ -24,6 +25,13 @@ enum
     defult_learningtype,
     static_learningtype,
 };
+
+enum
+{
+    ordered,
+    unordered,
+};
+
 struct argFCNN
 {
     argFCNN();
@@ -31,6 +39,7 @@ struct argFCNN
     size_t numOfLay;
     double learningRate;
     int learningRateType;
+    size_t numofarg();
 };
 
 class FCNN
@@ -180,3 +189,31 @@ public:
     void backward(int lable);
     void backward(data* lable);
 };
+
+class fold_num
+{
+public:
+    std::vector<std::vector<data>> nums_informathion_pixmap_bit;
+    int lable;
+    fold_num(int arg_lable);
+    fold_num()=default;
+};
+
+class fileIn
+{
+private:
+    std::vector<fold_num> res_train;
+    std::vector<fold_num> res_test;
+    size_t sizeOfEach_informathion_pixmap_bit;
+    int type;
+    bool isFileExists_ifstream(std::string &name);
+    // 通过stat结构体 获得文件大小，单位字节
+    size_t getFileSize1(const char *fileName);
+    size_t weight;
+    size_t hight;
+
+public:
+    fileIn(char*path="");
+    int getlast(char *&origin_in);
+};
+
